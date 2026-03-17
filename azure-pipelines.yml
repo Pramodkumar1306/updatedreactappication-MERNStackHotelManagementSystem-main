@@ -1,0 +1,29 @@
+trigger:
+- main
+
+pool:
+  name: 'Default'
+
+variables:
+  imageName: 'backend-app'
+  acrName: 'mernacr123321'
+
+steps:
+
+- task: NodeTool@0
+  inputs:
+    versionSpec: '18.x'
+
+- script: |
+    cd BackEnd
+    npm install
+  displayName: 'Install Backend Dependencies'
+
+- task: Docker@2
+  inputs:
+    containerRegistry: 'ACR-Service-Connection'
+    repository: 'backend-app'
+    command: 'buildAndPush'
+    Dockerfile: 'BackEnd/Dockerfile'
+    tags: |
+      v1
