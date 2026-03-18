@@ -8,22 +8,44 @@ variables:
   imageName: 'backend-app'
   acrName: 'mernacr123321'
 
-steps:
+stages:
 
-- task: NodeTool@0
-  inputs:
-    versionSpec: '18.x'
+# ✅ STAGE 1 — CI (BUILD + PUSH IMAGE)
+- stage: Build
+  displayName: Build and Push Image
+  jobs:
+  - job: BuildJob
+    steps:
 
-- script: |
-    cd BackEnd
-    npm install
-  displayName: 'Install Backend Dependencies'
+    - task: NodeTool@0
+      inputs:
+        versionSpec: '18.x'
 
-- task: Docker@2
-  inputs:
-    containerRegistry: 'ACR-Service-Connection'
-    repository: 'backend-app'
-    command: 'buildAndPush'
-    Dockerfile: 'BackEnd/Dockerfile'
-    tags: |
-      v1
+    - script: |
+        cd BackEnd
+        npm install
+      displayName: Install Backend Dependencies
+
+    - task: Docker@2
+      displayName: Build and Push Docker Image
+      inputs:
+        containerRegistry: 'ACR-Service-Connection'
+        repository: 'backend-app'
+        command: 'buildAndPush'
+        Dockerfile: 'BackEnd/Dockerfile'
+        tags: |
+          v1
+
+# ✅ STAGE 2 — CD (WITH APPROVAL)
+- stage: Deploy
+  displayName: Deploy Stage
+  dependsOn: Build
+  jobs:
+  - deployment: DeployJob
+    displayName: Deploy to Environment
+    environment: prod-env   # 👈 THIS ENABLES APPROVAL
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - script: echo "Deployment started after approval"
